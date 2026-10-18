@@ -1,8 +1,9 @@
 """
 gui_app.py
-İHA Telemetri Analiz ve Görselleştirme Masaüstü Uygulaması (v1.3.0).
+İHA Telemetri Analiz ve Görselleştirme Masaüstü Uygulaması (v1.4.0).
 CustomTkinter ve Matplotlib tabanlı modern kullanıcı arayüzü.
-Açılış ekranı (splash screen), ikon, animasyonlu sayaçlar ve sayfa geçişleri.
+Garantili animasyonlu açılış ekranı (Splash Screen - 1.8 sn), İHA ikonu,
+pencere fade-in açılış animasyonu, animasyonlu KPI sayaçları ve sayfa geçiş efektleri.
 """
 
 import os
@@ -10,6 +11,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import customtkinter as ctk
+from PIL import Image
 import pandas as pd
 import matplotlib
 matplotlib.use("TkAgg")
@@ -17,10 +19,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.dates as mdates
 
-# PyInstaller Açılış Ekranı (Splash Screen) Kapatıcı
 try:
     import pyi_splash
-    pyi_splash.update_text("Telemetri arayüzü başlatılıyor...")
 except ImportError:
     pyi_splash = None
 
@@ -33,7 +33,7 @@ ctk.set_default_color_theme("blue")
 
 
 def get_resource_path(relative_path: str) -> str:
-    """PyInstaller veya normal çalışmada kaynak dosya yolunu döndürür."""
+    """PyInstaller veya taşınabilir (portable) çalışmada kaynak dosya yolunu döndürür."""
     base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
@@ -42,11 +42,11 @@ class TelemetryApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("İHA Telemetri Analiz İstasyonu v1.3.0")
+        self.title("İHA Telemetri Analiz İstasyonu v1.4.0")
         self.geometry("1280x860")
         self.minsize(1050, 720)
 
-        # İkon Ayarla
+        # İHA İkonunu Ayarla
         icon_path = get_resource_path(os.path.join("assets", "telemetry_icon.ico"))
         if os.path.exists(icon_path):
             try:
@@ -63,24 +63,156 @@ class TelemetryApp(ctk.CTk):
 
         self._build_ui()
 
-        # Splash ekranını kapat
         if pyi_splash is not None:
             try:
                 pyi_splash.close()
             except Exception:
                 pass
 
+        # Çok hızlı açılsa bile en az 1.8 saniye garantili animasyonlu Açılış Paneli (Splash) göster
+        self._show_startup_splash()
+
+    def _show_startup_splash(self):
+        """İlk tıklamada ekranda 1.8 saniye boyunca animasyonlu İHA yükleme paneli gösterir ve ardından ana pencereyi fade-in ile açar."""
+        self.attributes("-alpha", 0.0)
+
+        splash = tk.Toplevel(self)
+        splash.overrideredirect(True)
+        splash.attributes("-topmost", True)
+        splash.configure(bg="#0b1526")
+
+        w, h = 540, 310
+        sw = splash.winfo_screenwidth()
+        sh = splash.winfo_screenheight()
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        splash.geometry(f"{w}x{h}+{x}+{y}")
+
+        # Çerçeve
+        border = tk.Frame(splash, bg="#00d2ff", bd=0)
+        border.place(x=0, y=0, width=w, height=h)
+        inner = tk.Frame(border, bg="#0b1526")
+        inner.place(x=2, y=2, width=w - 4, height=h - 4)
+
+        # Üst vurgu şeridi
+        top_bar = tk.Frame(inner, bg="#00d2ff", height=5)
+        top_bar.pack(fill="x", side="top")
+
+        # İHA İkon Görseli
+        png_path = get_resource_path(os.path.join("assets", "telemetry_icon.png"))
+        if os.path.exists(png_path):
+            try:
+                pil_img = Image.open(png_path).resize((84, 84), Image.Resampling.LANCZOS)
+                self._splash_logo = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(84, 84))
+                logo_lbl = ctk.CTkLabel(inner, image=self._splash_logo, text="", fg_color="#0b1526")
+                logo_lbl.pack(pady=(22, 8))
+            except Exception:
+                pass
+
+        title_lbl = ctk.CTkLabel(
+            inner,
+            text="İHA TELEMETRİ ANALİZ İSTASYONU",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color="#ffffff",
+            fg_color="#0b1526",
+        )
+        title_lbl.pack(pady=(2, 2))
+
+        sub_lbl = ctk.CTkLabel(
+            inner,
+            text="Uçuş Verisi Doğrulama, Anomali Tespiti ve Zaman Serisi Görselleştirme • v1.4.0",
+            font=ctk.CTkFont(size=11),
+            text_color="#74c0fc",
+            fg_color="#0b1526",
+        )
+        sub_lbl.pack(pady=(0, 18))
+
+        status_lbl = ctk.CTkLabel(
+            inner,
+            text="Telemetri doğrulama motoru başlatılıyor... %0",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color="#e9ecef",
+            fg_color="#0b1526",
+        )
+        status_lbl.pack(pady=(0, 8))
+
+        pbar = ctk.CTkProgressBar(inner, width=430, height=12, corner_radius=6, progress_color="#00d2ff", fg_color="#1c2d48")
+        pbar.set(0.0)
+        pbar.pack(pady=(0, 14))
+
+        footer_lbl = ctk.CTkLabel(
+            inner,
+            text="🛡️ DigiCert İmzalı Güvenli Çalışma Zamanı • 9 Eksende Telemetri Denetimi",
+            font=ctk.CTkFont(size=10),
+            text_color="#868e96",
+            fg_color="#0b1526",
+        )
+        footer_lbl.pack(side="bottom", pady=10)
+
+        stages = [
+            (0.20, "Sensör ve telemetri doğrulama kuralları yükleniyor... %20"),
+            (0.45, "Zaman serisi ve kesinti (gap) analiz motoru hazırlanıyor... %45"),
+            (0.75, "Grafik ve görselleştirme katmanı başlatılıyor... %75"),
+            (1.00, "İstasyon hazır! Arayüz açılıyor... %100"),
+        ]
+
+        total_steps = 36  # 36 * 50ms = 1800ms (1.8 saniye garantili açılış ekranı)
+
+        def animate_splash(step_idx=0):
+            if step_idx <= total_steps:
+                prog = step_idx / total_steps
+                pbar.set(prog)
+                pct = int(prog * 100)
+                if prog < 0.28:
+                    msg = f"Sensör ve telemetri doğrulama kuralları yükleniyor... %{pct}"
+                elif prog < 0.58:
+                    msg = f"Zaman serisi ve kesinti (gap) analiz motoru hazırlanıyor... %{pct}"
+                elif prog < 0.88:
+                    msg = f"Grafik ve görselleştirme katmanı başlatılıyor... %{pct}"
+                else:
+                    msg = f"İstasyon hazır! Arayüz açılıyor... %{pct}"
+                status_lbl.configure(text=msg)
+                self.after(48, animate_splash, step_idx + 1)
+            else:
+                try:
+                    splash.destroy()
+                except Exception:
+                    pass
+                self._fade_in_main_window()
+
+        animate_splash(0)
+
+    def _fade_in_main_window(self, alpha=0.0):
+        """Ana pencereyi yumuşak (fade-in) animasyonla görünür yapar."""
+        alpha = min(1.0, alpha + 0.12)
+        self.attributes("-alpha", alpha)
+        if alpha < 1.0:
+            self.after(20, self._fade_in_main_window, alpha)
+        else:
+            self.focus_force()
+
     def _build_ui(self):
         # 1. Üst Başlık ve Kontrol Çubuğu (CSV Üret Butonu Kaldırıldı)
         top_frame = ctk.CTkFrame(self, corner_radius=10)
         top_frame.pack(fill="x", padx=15, pady=(15, 10))
 
+        # Başlık yanında İHA İkonu
+        png_path = get_resource_path(os.path.join("assets", "telemetry_icon.png"))
+        if os.path.exists(png_path):
+            try:
+                pil_hdr = Image.open(png_path).resize((34, 34), Image.Resampling.LANCZOS)
+                self._hdr_icon = ctk.CTkImage(light_image=pil_hdr, dark_image=pil_hdr, size=(34, 34))
+                hdr_img_lbl = ctk.CTkLabel(top_frame, image=self._hdr_icon, text="")
+                hdr_img_lbl.pack(side="left", padx=(15, 4), pady=10)
+            except Exception:
+                pass
+
         title_label = ctk.CTkLabel(
             top_frame,
-            text="🛸 İHA Telemetri Analiz İstasyonu",
+            text="İHA Telemetri Analiz İstasyonu",
             font=ctk.CTkFont(size=20, weight="bold")
         )
-        title_label.pack(side="left", padx=15, pady=12)
+        title_label.pack(side="left", padx=(6, 15), pady=12)
 
         self.btn_select_file = ctk.CTkButton(
             top_frame,
@@ -122,6 +254,7 @@ class TelemetryApp(ctk.CTk):
         self.kpi_frame.pack(fill="x", padx=15, pady=(0, 10))
 
         self.cards = {}
+        self.card_frames = {}
         card_configs = [
             ("total_records", "Toplam / Geçerli Kayıt", "- / -"),
             ("error_count", "Hatalı Kayıt Sayısı", "-"),
@@ -133,7 +266,7 @@ class TelemetryApp(ctk.CTk):
         ]
 
         for i, (key, title, default_val) in enumerate(card_configs):
-            card = ctk.CTkFrame(self.kpi_frame, corner_radius=8)
+            card = ctk.CTkFrame(self.kpi_frame, corner_radius=8, border_width=1, border_color="#2b3035")
             card.pack(side="left", fill="both", expand=True, padx=4)
 
             t_lbl = ctk.CTkLabel(card, text=title, font=ctk.CTkFont(size=11), text_color="#adb5bd")
@@ -143,14 +276,30 @@ class TelemetryApp(ctk.CTk):
             v_lbl.pack(padx=8, pady=(0, 8))
 
             self.cards[key] = v_lbl
+            self.card_frames[key] = card
 
         # 3. Sekmeli Ana Bölüm (Sayfa Geçiş Animasyonu Desteği)
-        self.tabview = ctk.CTkTabview(self, corner_radius=10, command=self._on_tab_switched)
+        self.tabview = ctk.CTkTabview(
+            self,
+            corner_radius=10,
+            border_width=2,
+            border_color="#2b3035",
+            command=self._on_tab_switched
+        )
         self.tabview.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 
         self.tab_charts = self.tabview.add("📈 Telemetri Grafikleri")
         self.tab_table = self.tabview.add("📋 Geçerli Veri Tablosu")
         self.tab_errors = self.tabview.add("⚠️ Hatalı Kayıtlar Raporu")
+
+        # Geçiş durumu etiketi (Sağ üstte yumuşak bildirim)
+        self.lbl_tab_transition = ctk.CTkLabel(
+            top_frame,
+            text="",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#00d2ff"
+        )
+        self.lbl_tab_transition.pack(side="right", padx=8)
 
         self._setup_charts_tab()
         self._setup_table_tab()
@@ -183,25 +332,25 @@ class TelemetryApp(ctk.CTk):
             spine.set_color("#495057")
 
     def _setup_table_tab(self):
-        frame = ctk.CTkFrame(self.tab_table, fg_color="transparent")
-        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.table_container = ctk.CTkFrame(self.tab_table, fg_color="transparent")
+        self.table_container.pack(fill="both", expand=True, padx=10, pady=10)
 
         columns = ("timestamp", "altitude", "speed", "battery_pct", "longitude", "latitude", "pitch", "roll", "yaw")
-        
+
         style = ttk.Style()
         style.theme_use("clam")
         style.configure("Treeview", background="#212529", foreground="white", fieldbackground="#212529", rowheight=24)
         style.configure("Treeview.Heading", background="#343a40", foreground="white", font=('Helvetica', 10, 'bold'))
         style.map("Treeview", background=[('selected', '#1971c2')])
 
-        self.tree_valid = ttk.Treeview(frame, columns=columns, show="headings")
-        
+        self.tree_valid = ttk.Treeview(self.table_container, columns=columns, show="headings")
+
         for col in columns:
             self.tree_valid.heading(col, text=col)
             self.tree_valid.column(col, width=110, anchor="center")
 
-        scroll_y = ttk.Scrollbar(frame, orient="vertical", command=self.tree_valid.yview)
-        scroll_x = ttk.Scrollbar(frame, orient="horizontal", command=self.tree_valid.xview)
+        scroll_y = ttk.Scrollbar(self.table_container, orient="vertical", command=self.tree_valid.yview)
+        scroll_x = ttk.Scrollbar(self.table_container, orient="horizontal", command=self.tree_valid.xview)
         self.tree_valid.configure(yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set)
 
         scroll_y.pack(side="right", fill="y")
@@ -209,12 +358,12 @@ class TelemetryApp(ctk.CTk):
         self.tree_valid.pack(side="left", fill="both", expand=True)
 
     def _setup_errors_tab(self):
-        frame = ctk.CTkFrame(self.tab_errors, fg_color="transparent")
-        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.errors_container = ctk.CTkFrame(self.tab_errors, fg_color="transparent")
+        self.errors_container.pack(fill="both", expand=True, padx=10, pady=10)
 
         columns = ("row", "column", "message", "raw_value")
-        self.tree_errors = ttk.Treeview(frame, columns=columns, show="headings")
-        
+        self.tree_errors = ttk.Treeview(self.errors_container, columns=columns, show="headings")
+
         self.tree_errors.heading("row", text="Satır No")
         self.tree_errors.heading("column", text="Hatalı Sütun")
         self.tree_errors.heading("message", text="Red Nedeni / Açıklama")
@@ -225,8 +374,8 @@ class TelemetryApp(ctk.CTk):
         self.tree_errors.column("message", width=450, anchor="w")
         self.tree_errors.column("raw_value", width=160, anchor="center")
 
-        scroll_y = ttk.Scrollbar(frame, orient="vertical", command=self.tree_errors.yview)
-        scroll_x = ttk.Scrollbar(frame, orient="horizontal", command=self.tree_errors.xview)
+        scroll_y = ttk.Scrollbar(self.errors_container, orient="vertical", command=self.tree_errors.yview)
+        scroll_x = ttk.Scrollbar(self.errors_container, orient="horizontal", command=self.tree_errors.xview)
         self.tree_errors.configure(yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set)
 
         scroll_y.pack(side="right", fill="y")
@@ -234,12 +383,33 @@ class TelemetryApp(ctk.CTk):
         self.tree_errors.pack(side="left", fill="both", expand=True)
 
     def _on_tab_switched(self):
-        """Sayfa geçişlerinde hafif yumuşak geçiş (smooth transition) efekti."""
+        """Sayfa (sekme) geçişlerinde görsel çerçeve parlaması (glow pulse) ve yumuşak geçiş animasyonu."""
         current_tab = self.tabview.get()
+        glow_colors = ["#00d2ff", "#339af0", "#1971c2", "#2b3035"]
+
+        def animate_border(idx=0):
+            if idx < len(glow_colors):
+                self.tabview.configure(border_color=glow_colors[idx])
+                self.after(65, animate_border, idx + 1)
+
+        animate_border(0)
+
         if "Grafik" in current_tab and hasattr(self, "canvas"):
             self.canvas.draw_idle()
 
-    def _animate_number(self, card_key: str, start: float, end: float, unit: str = "", steps: int = 10, is_int: bool = False):
+    def _pulse_kpi_cards(self):
+        """Analiz tamamlandığında KPI kartlarında hafif mavi/yeşil çerçeve dalgası oluşturur."""
+        colors = ["#00d2ff", "#339af0", "#2b3035"]
+
+        def pulse_step(c_idx=0):
+            if c_idx < len(colors):
+                for cf in self.card_frames.values():
+                    cf.configure(border_color=colors[c_idx])
+                self.after(90, pulse_step, c_idx + 1)
+
+        pulse_step(0)
+
+    def _animate_number(self, card_key: str, start: float, end: float, unit: str = "", steps: int = 12, is_int: bool = False):
         """Metrik kartındaki sayıyı profesyonel sayaç animasyonuyla artırır."""
         def step(current_step):
             if current_step >= steps:
@@ -254,7 +424,7 @@ class TelemetryApp(ctk.CTk):
                 self.cards[card_key].configure(text=f"{int(current_val)} {unit}".strip())
             else:
                 self.cards[card_key].configure(text=f"{current_val:.1f} {unit}".strip())
-            self.after(18, step, current_step + 1)
+            self.after(20, step, current_step + 1)
         step(1)
 
     def select_file(self):
@@ -264,7 +434,7 @@ class TelemetryApp(ctk.CTk):
         )
         if file_path:
             self.current_file_path = file_path
-            self.lbl_file_path.configure(text=os.path.basename(file_path), text_color="white")
+            self.lbl_file_path.configure(text=os.path.basename(file_path), text_color="#00d2ff")
 
     def run_analysis(self):
         if not self.current_file_path:
@@ -312,7 +482,8 @@ class TelemetryApp(ctk.CTk):
             )
             return
 
-        # KPI Kartlarını Sayaç Animasyonu ile Güncelle
+        # KPI Kartlarını Sayaç ve Parlama Animasyonu ile Güncelle
+        self._pulse_kpi_cards()
         self.cards["total_records"].configure(text=f"{result.total_rows} / {result.valid_rows}")
         self.cards["error_count"].configure(
             text=f"{result.invalid_rows}",
@@ -403,6 +574,7 @@ class TelemetryApp(ctk.CTk):
         self._style_axis(self.ax_spd, "Hız (Speed) [m/s]", "#69db7c")
         self._style_axis(self.ax_bat, "Batarya Seviyesi [%]", "#ffa94d")
         self.canvas.draw()
+
 
 if __name__ == "__main__":
     app = TelemetryApp()

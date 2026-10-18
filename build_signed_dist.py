@@ -165,18 +165,18 @@ if __name__ == '__main__':
 if __name__ == "__main__":
     p1 = build_package(
         app_title="IHA_Telemetri_Analiz",
-        folder_name="IHA_Telemetri_Analiz_v1.3.0",
+        folder_name="IHA_Telemetri_Analiz_v1.4.0",
         project_dir=r"c:\Users\PC\Desktop\Projects\İME Proje",
         entry_script="gui_app.py",
-        extra_files=["telemetry_validator.py", "telemetry_analyzer.py", "data_generator.py"],
+        extra_files=["telemetry_validator.py", "telemetry_analyzer.py", "data_generator.py", "README.md", "TEKNIK_RAPOR.md"],
         extra_dirs=["assets", "samples"],
     )
 
     p2 = build_package(
         app_title="CSV_Senaryo_Uretici",
-        folder_name="CSV_Senaryo_Uretici_v1.3.0",
+        folder_name="CSV_Senaryo_Uretici_v1.4.0",
         project_dir=r"c:\Users\PC\Desktop\Projects\iha-csv-senaryo-uretici",
         entry_script="app.py",
-        extra_files=["scenario_engine.py"],
+        extra_files=["scenario_engine.py", "README.md"],
         extra_dirs=["assets"],
     )
