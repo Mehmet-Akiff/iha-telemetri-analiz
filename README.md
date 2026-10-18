@@ -42,16 +42,35 @@ Eğer kaynak kodlar üzerinden çalıştırmak isterseniz:
    python gui_app.py
    ```
 
-### Arayüz Kullanımı:
-1. **"Örnek CSV Üret"** butonuna basarak `samples/` dizini altına test dosyalarını oluşturabilirsiniz.
-2. **"CSV Dosyası Seç"** butonuyla istediğiniz `.csv` dosyasını seçin.
-3. İsteğe bağlı olarak **"Zaman Boşluğu Eşiği (sn)"** kutusundan eşiği ayarlayın (varsayılan: 3.0 saniye).
-4. **"Analiz Et"** butonuna tıklayın.
-5. Sonuçlar;
-   - Üst kartlarda (KPI),
-   - **📈 Telemetri Grafikleri** sekmesinde (İrtifa, Hız, Batarya ve kesinti aralıkları),
-   - **📋 Geçerli Veri Tablosu** sekmesinde,
-   - **⚠️ Hatalı Kayıtlar Raporu** sekmesinde (hangi satırın neden reddedildiği) anında görüntülenir.
+### 🛸 Uygulama 1: İHA Telemetri Analiz İstasyonu
+- **Tek Tık Başlatıcı:** Proje dizinindeki **`Baslat.bat`** dosyasına çift tıklayın.
+- **Kaynak Koddan:** `python gui_app.py`
+- **Kullanım:**
+  1. "CSV Dosyası Seç" butonuyla analiz etmek istediğiniz telemetri dosyasını yükleyin.
+  2. "Analiz Et" butonuna tıklayarak metrikleri, grafikleri ve hata raporunu inceleyin.
+
+---
+
+### 🧪 Uygulama 2: İHA Telemetri CSV Senaryo Üretici
+Test ve doğrulama süreçleri için özel olarak geliştirilmiş ikinci masaüstü uygulamasıdır.
+- **Tek Tık Başlatıcı:** Proje dizinindeki **`Uretici_Baslat.bat`** dosyasına çift tıklayın.
+- **Kaynak Koddan:** `python generator_gui.py`
+- **Desteklenen 14 Senaryo:**
+  1. %100 Geçerli Uçuş (Normal seyir profili)
+  2. Zaman Boşluğu / Kesintili Uçuş (Data drop simülasyonu)
+  3. Karışık / Kısmi Hatalı Veri (Kısmi kurtarma testi için)
+  4. Negatif Hız Değerleri
+  5. Batarya Sınır İhlalleri (< %0 ve > %100)
+  6. Geçersiz Enlem/Boylam (WGS84 sınır dışı)
+  7. Sayısal Alanda Metin İçeren Veri
+  8. Zorunlu Alanı Boş Bırakılmış Satırlar
+  9. Çözümlenemeyen / Bozuk Zaman Damgaları
+  10. Açısal Sınır İhlalleri (Pitch/Roll/Yaw)
+  11. Gerekli Sütunları Eksik CSV
+  12. Sıfır Geçerli Kayıt (Tüm satırlar hatalı)
+  13. Boş Dosya (0 bayt)
+  14. Bozuk Biçimli / Geçersiz CSV Sözdizimi
+- **Özellikler:** Satır sayısı, kesinti süresi, irtifa, hız ve batarya parametrelerini özelleştirebilme, canlı tablo önizlemesi ve doğrudan istenen konuma CSV kaydetme.
 
 ---
 
