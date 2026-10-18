@@ -2,9 +2,11 @@
 data_generator.py
 İHA telemetri verisi üretim motoru.
 Genişletilebilir senaryo tabanlı sentetik veri üretimi sağlar.
+Her periyodu sıralı ve tarihli klasörlerde izole eder.
 """
 
 import os
+import re
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 import pandas as pd
@@ -16,7 +18,7 @@ SCENARIO_DESCRIPTIONS = {
     "negative_speed": "4. Negatif Hız Değerleri İçeren Veri",
     "battery_bounds": "5. Batarya Sınır İhlali (%0 altı ve %100 üstü)",
     "coord_bounds": "6. Geçersiz Enlem/Boylam (Lat [-90,90], Lon [-180,180] dışı)",
-    "text_in_numeric": "7. Sayısal Alanda Metin (Örn: altitude='YUKSEK')",
+    "text_in_numeric": "7. Sayısal Alanda Metin (Örn: altitude='COK_YUKSEK')",
     "empty_fields": "8. Zorunlu Alanları Boş Bırakılmış Satırlar",
     "bad_timestamps": "9. Çözümlenemeyen / Bozuk Zaman Damgaları",
     "bad_angles": "10. Açısal Sınır İhlalleri (Pitch/Roll > 180, Yaw > 360)",
@@ -45,10 +47,6 @@ class TelemetryScenarioGenerator:
         initial_speed: float = 15.0,
         initial_battery: float = 100.0
     ) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
-        """
-        Belirtilen senaryo için DataFrame veya ham içerik üretir.
-        Döner: (DataFrame, raw_content_str)
-        """
         base_time = start_time or datetime(2026, 10, 20, 14, 30, 0)
         lat = 41.015137
         lon = 28.979530
@@ -76,15 +74,12 @@ class TelemetryScenarioGenerator:
                     "longitude": round(lon + (i * 0.0001), 6),
                     "latitude": round(lat + (i * 0.0001), 6),
                     "roll": 0.0
-                    # missing: speed, battery_pct, pitch, yaw
                 })
             return pd.DataFrame(rows), None
 
-        # Standart satırlar oluşturma
         rows = []
         current_time = base_time
         for i in range(count):
-            # Zaman boşluğu senaryosu
             if scenario_key == "with_gaps" and i == int(count // 2):
                 current_time += timedelta(seconds=gap_duration_sec)
             else:
@@ -111,44 +106,33 @@ class TelemetryScenarioGenerator:
                 "yaw": round(yaw, 2)
             }
 
-            # Senaryo spesifik hata enjeksiyonu
             if scenario_key == "negative_speed" and i % 5 == 0:
                 row["speed"] = -12.5
-
             elif scenario_key == "battery_bounds":
                 if i % 6 == 0:
                     row["battery_pct"] = 125.0
                 elif i % 6 == 3:
                     row["battery_pct"] = -8.0
-
             elif scenario_key == "coord_bounds":
                 if i % 6 == 0:
                     row["latitude"] = 98.5
                 elif i % 6 == 3:
                     row["longitude"] = -195.0
-
             elif scenario_key == "text_in_numeric" and i % 5 == 0:
                 row["altitude"] = "COK_YUKSEK"
-
             elif scenario_key == "empty_fields" and i % 5 == 0:
                 row["speed"] = ""
-
             elif scenario_key == "bad_timestamps" and i % 5 == 0:
                 row["timestamp"] = "HATALI_ZAMAN_2026"
-
             elif scenario_key == "bad_angles":
                 if i % 6 == 0:
                     row["pitch"] = 210.0
                 elif i % 6 == 3:
                     row["roll"] = -250.0
-
             elif scenario_key == "all_invalid":
-                # Tüm satırlara hata enjekte et
                 row["speed"] = -15.0
                 row["battery_pct"] = 150.0
-
             elif scenario_key == "mixed":
-                # Karışık senaryoda her 4 satırda bir farklı bir hata türü
                 if i % 10 == 2:
                     row["speed"] = -10.0
                 elif i % 10 == 4:
@@ -168,7 +152,6 @@ class TelemetryScenarioGenerator:
         output_file_path: str,
         **kwargs
     ) -> str:
-        """Veriyi üretir ve belirtilen yola kaydeder."""
         os.makedirs(os.path.dirname(os.path.abspath(output_file_path)), exist_ok=True)
         df, raw_content = self.generate_data(scenario_key, **kwargs)
 
@@ -182,6 +165,46 @@ class TelemetryScenarioGenerator:
                 pass
 
         return output_file_path
+
+    def generate_isolated_batch(self, base_output_dir: str = "samples", **kwargs) -> str:
+        """
+        Her üretim periyodunu sıralı ve tarihli ayrı bir alt klasörde oluşturur.
+        Örnek: samples/01_Uretim_2026-10-18_23-55-12/
+        """
+        os.makedirs(base_output_dir, exist_ok=True)
+        existing = [d for d in os.listdir(base_output_dir) if os.path.isdir(os.path.join(base_output_dir, d))]
+        seq_nums = []
+        for name in existing:
+            match = re.match(r"^(\d+)_Uretim", name)
+            if match:
+                seq_nums.append(int(match.group(1)))
+
+        next_seq = max(seq_nums, default=0) + 1
+        now_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        batch_folder_name = f"{next_seq:02d}_Uretim_{now_str}"
+        target_dir = os.path.join(base_output_dir, batch_folder_name)
+        os.makedirs(target_dir, exist_ok=True)
+
+        idx = 1
+        report_lines = [
+            f"# ÜRETİM RAPORU - PERİYOT #{next_seq:02d}",
+            f"Tarih/Saat: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Hedef Klasör: {target_dir}",
+            "-" * 60,
+            "Üretilen Senaryo Dosyaları:"
+        ]
+
+        for key, desc in self.scenarios.items():
+            filename = f"{idx:02d}_{key}.csv"
+            out_file = os.path.join(target_dir, filename)
+            self.generate_and_save(key, out_file, **kwargs)
+            report_lines.append(f"{idx:02d}. {filename} -> {desc}")
+            idx += 1
+
+        with open(os.path.join(target_dir, "senaryo_listesi.txt"), "w", encoding="utf-8") as f:
+            f.write("\n".join(report_lines))
+
+        return target_dir
 
 
 def generate_all_samples(output_dir: str = "samples") -> Dict[str, str]:
@@ -208,9 +231,6 @@ def generate_all_samples(output_dir: str = "samples") -> Dict[str, str]:
 
 
 if __name__ == "__main__":
-    import sys
-    target = sys.argv[1] if len(sys.argv) > 1 else "samples"
-    res = generate_all_samples(target)
-    print("Örnek CSV dosyaları üretildi:")
-    for k, v in res.items():
-        print(f" - {k}: {v}")
+    gen = TelemetryScenarioGenerator()
+    b_dir = gen.generate_isolated_batch("samples")
+    print(f"İzole periyot başarıyla oluşturuldu: {b_dir}")

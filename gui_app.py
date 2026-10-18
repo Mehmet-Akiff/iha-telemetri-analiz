@@ -1,7 +1,8 @@
 """
 gui_app.py
-İHA Telemetri Analiz ve Görselleştirme Masaüstü Uygulaması.
+İHA Telemetri Analiz ve Görselleştirme Masaüstü Uygulaması (v1.1.0).
 CustomTkinter ve Matplotlib tabanlı modern kullanıcı arayüzü.
+Açılış ekranı (splash screen), ikon, animasyonlu sayaçlar ve sayfa geçişleri.
 """
 
 import os
@@ -16,9 +17,15 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.dates as mdates
 
+# PyInstaller Açılış Ekranı (Splash Screen) Kapatıcı
+try:
+    import pyi_splash
+    pyi_splash.update_text("Telemetri arayüzü başlatılıyor...")
+except ImportError:
+    pyi_splash = None
+
 from telemetry_validator import TelemetryValidator, ValidationResult
 from telemetry_analyzer import TelemetryAnalyzer, AnalysisResult
-from data_generator import generate_all_samples
 
 # Uygulama Tema Ayarları
 ctk.set_appearance_mode("Dark")
@@ -28,9 +35,17 @@ class TelemetryApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("İHA Telemetri Analiz ve Görselleştirme İstasyonu")
-        self.geometry("1280x850")
+        self.title("İHA Telemetri Analiz İstasyonu v1.1.0")
+        self.geometry("1280x860")
         self.minsize(1050, 720)
+
+        # İkon Ayarla
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "telemetry_icon.ico")
+        if os.path.exists(icon_path):
+            try:
+                self.iconbitmap(icon_path)
+            except Exception:
+                pass
 
         self.validator = TelemetryValidator()
         self.analyzer = TelemetryAnalyzer(gap_threshold_seconds=3.0)
@@ -41,8 +56,15 @@ class TelemetryApp(ctk.CTk):
 
         self._build_ui()
 
+        # Splash ekranını kapat
+        if pyi_splash is not None:
+            try:
+                pyi_splash.close()
+            except Exception:
+                pass
+
     def _build_ui(self):
-        # 1. Üst Başlık ve Kontrol Çubuğu
+        # 1. Üst Başlık ve Kontrol Çubuğu (CSV Üret Butonu Kaldırıldı)
         top_frame = ctk.CTkFrame(self, corner_radius=10)
         top_frame.pack(fill="x", padx=15, pady=(15, 10))
 
@@ -64,7 +86,7 @@ class TelemetryApp(ctk.CTk):
 
         self.lbl_file_path = ctk.CTkLabel(
             top_frame,
-            text="Dosya seçilmedi",
+            text="Analiz edilecek CSV dosyasını seçiniz...",
             text_color="gray",
             font=ctk.CTkFont(size=12)
         )
@@ -83,20 +105,10 @@ class TelemetryApp(ctk.CTk):
             command=self.run_analysis,
             fg_color="#2b8a3e",
             hover_color="#237032",
-            width=110,
+            width=120,
             font=ctk.CTkFont(weight="bold")
         )
-        self.btn_analyze.pack(side="left", padx=10, pady=12)
-
-        self.btn_generate_samples = ctk.CTkButton(
-            top_frame,
-            text="🧪 Örnek CSV Üret",
-            command=self.generate_samples_action,
-            fg_color="#495057",
-            hover_color="#343a40",
-            width=130
-        )
-        self.btn_generate_samples.pack(side="right", padx=15, pady=12)
+        self.btn_analyze.pack(side="left", padx=(10, 15), pady=12)
 
         # 2. Özet KPI Kartları
         self.kpi_frame = ctk.CTkFrame(self, corner_radius=10, fg_color="transparent")
@@ -125,8 +137,8 @@ class TelemetryApp(ctk.CTk):
 
             self.cards[key] = v_lbl
 
-        # 3. Sekmeli Ana Bölüm (Grafikler, Tablo, Hata Raporu)
-        self.tabview = ctk.CTkTabview(self, corner_radius=10)
+        # 3. Sekmeli Ana Bölüm (Sayfa Geçiş Animasyonu Desteği)
+        self.tabview = ctk.CTkTabview(self, corner_radius=10, command=self._on_tab_switched)
         self.tabview.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 
         self.tab_charts = self.tabview.add("📈 Telemetri Grafikleri")
@@ -138,7 +150,6 @@ class TelemetryApp(ctk.CTk):
         self._setup_errors_tab()
 
     def _setup_charts_tab(self):
-        # Matplotlib Figure
         self.fig = Figure(figsize=(10, 6), dpi=100)
         self.fig.patch.set_facecolor("#212529")
 
@@ -215,8 +226,31 @@ class TelemetryApp(ctk.CTk):
         scroll_x.pack(side="bottom", fill="x")
         self.tree_errors.pack(side="left", fill="both", expand=True)
 
+    def _on_tab_switched(self):
+        """Sayfa geçişlerinde hafif yumuşak geçiş (smooth transition) efekti."""
+        current_tab = self.tabview.get()
+        if "Grafik" in current_tab and hasattr(self, "canvas"):
+            self.canvas.draw_idle()
+
+    def _animate_number(self, card_key: str, start: float, end: float, unit: str = "", steps: int = 10, is_int: bool = False):
+        """Metrik kartındaki sayıyı profesyonel sayaç animasyonuyla artırır."""
+        def step(current_step):
+            if current_step >= steps:
+                if is_int:
+                    self.cards[card_key].configure(text=f"{int(end)} {unit}".strip())
+                else:
+                    self.cards[card_key].configure(text=f"{end:.1f} {unit}".strip())
+                return
+            progress = current_step / steps
+            current_val = start + (end - start) * progress
+            if is_int:
+                self.cards[card_key].configure(text=f"{int(current_val)} {unit}".strip())
+            else:
+                self.cards[card_key].configure(text=f"{current_val:.1f} {unit}".strip())
+            self.after(18, step, current_step + 1)
+        step(1)
+
     def select_file(self):
-        """Kullanıcının CSV dosyası seçmesini sağlar."""
         file_path = filedialog.askopenfilename(
             title="Telemetri CSV Dosyası Seçin",
             filetypes=[("CSV Dosyaları", "*.csv"), ("Tüm Dosyalar", "*.*")]
@@ -226,8 +260,6 @@ class TelemetryApp(ctk.CTk):
             self.lbl_file_path.configure(text=os.path.basename(file_path), text_color="white")
 
     def run_analysis(self):
-        """Seçili dosyayı doğrular, analiz eder ve arayüzü günceller."""
-        # 1. Senaryo Kontrolü: Hiç dosya seçilmeden analiz başlatılması
         if not self.current_file_path:
             messagebox.showwarning(
                 "Dosya Seçilmedi",
@@ -235,7 +267,6 @@ class TelemetryApp(ctk.CTk):
             )
             return
 
-        # Eşik değerini oku
         try:
             threshold = float(self.entry_threshold.get().strip())
             if threshold <= 0:
@@ -247,18 +278,15 @@ class TelemetryApp(ctk.CTk):
             )
             return
 
-        # 2. Doğrulama Motorunu Çalıştır
         result = self.validator.validate_file(self.current_file_path)
         self.current_validation = result
 
-        # Hata Tablosunu Doldur
         for item in self.tree_errors.get_children():
             self.tree_errors.delete(item)
 
         for err in result.errors:
             self.tree_errors.insert("", "end", values=(err.row, err.column, err.message, err.raw_value))
 
-        # Kritik Hata Durumları (Bozuk CSV, Boş CSV, Eksik Sütun veya 0 geçerli kayıt)
         if not result.is_valid:
             self._reset_kpi_and_views()
             messagebox.showerror(
@@ -267,7 +295,6 @@ class TelemetryApp(ctk.CTk):
             )
             return
 
-        # 3. Analiz Motorunu Çalıştır
         try:
             analysis = self.analyzer.analyze(result.valid_df, gap_threshold_seconds=threshold)
             self.current_analysis = analysis
@@ -278,15 +305,15 @@ class TelemetryApp(ctk.CTk):
             )
             return
 
-        # 4. KPI Kartlarını Güncelle
+        # KPI Kartlarını Sayaç Animasyonu ile Güncelle
         self.cards["total_records"].configure(text=f"{result.total_rows} / {result.valid_rows}")
         self.cards["error_count"].configure(
             text=f"{result.invalid_rows}",
             text_color="#ff6b6b" if result.invalid_rows > 0 else "#51cf66"
         )
-        self.cards["avg_altitude"].configure(text=f"{analysis.avg_altitude} m")
+        self._animate_number("avg_altitude", 0.0, analysis.avg_altitude, unit="m")
         self.cards["min_max_altitude"].configure(text=f"{analysis.min_altitude} / {analysis.max_altitude} m")
-        self.cards["avg_speed"].configure(text=f"{analysis.avg_speed} m/s")
+        self._animate_number("avg_speed", 0.0, analysis.avg_speed, unit="m/s")
         self.cards["min_battery"].configure(
             text=f"{analysis.min_battery} %",
             text_color="#ff6b6b" if analysis.min_battery < 20 else "white"
@@ -296,7 +323,7 @@ class TelemetryApp(ctk.CTk):
             text_color="#fcc419" if analysis.has_gaps else "white"
         )
 
-        # 5. Geçerli Veri Tablosunu Doldur
+        # Tabloyu Doldur
         for item in self.tree_valid.get_children():
             self.tree_valid.delete(item)
 
@@ -314,10 +341,10 @@ class TelemetryApp(ctk.CTk):
                 row["yaw"]
             ))
 
-        # 6. Grafikleri Çiz ve Zaman Boşluklarını Vurgula
+        # Grafikleri Çiz
         self._plot_telemetry(result.valid_df, analysis)
 
-        # 7. Bilgilendirme Popup'ı: Yalnızca hata tespit edildiğinde popup açılır, hatasız durumda açılmaz
+        # YALNIZCA HATA VARSA UYARI POPUP'I AÇILIR (Hatasız durumda popup açılmaz)
         if result.invalid_rows > 0:
             messagebox.showwarning(
                 "Doğrulama Uyarısı: Hatalı Kayıtlar Bulundu",
@@ -326,10 +353,8 @@ class TelemetryApp(ctk.CTk):
                 f"• Reddedilen Hatalı Kayıt: {result.invalid_rows}\n\n"
                 f"Reddedilen satırların nedenleri 'Hatalı Kayıtlar Raporu' sekmesine aktarılmıştır."
             )
-        # Hatasız durumda popup açılmaz, grafikler ve metrikler doğrudan güncellenir.
 
     def _plot_telemetry(self, df: pd.DataFrame, analysis: AnalysisResult):
-        """İrtifa, hız, batarya zaman serisi grafiklerini çizer ve boşlukları vurgular."""
         df_sorted = df.sort_values(by="timestamp").reset_index(drop=True)
         times = df_sorted["timestamp"]
 
@@ -337,28 +362,23 @@ class TelemetryApp(ctk.CTk):
         self.ax_spd.clear()
         self.ax_bat.clear()
 
-        # İrtifa Grafiği
         self.ax_alt.plot(times, df_sorted["altitude"], color="#4dabf7", linewidth=2.0, label="İrtifa (m)")
         self._style_axis(self.ax_alt, "İrtifa (Altitude) [m]", "#4dabf7")
         self.ax_alt.legend(loc="upper left", facecolor="#212529", edgecolor="#495057", labelcolor="white")
 
-        # Hız Grafiği
         self.ax_spd.plot(times, df_sorted["speed"], color="#69db7c", linewidth=2.0, label="Hız (m/s)")
         self._style_axis(self.ax_spd, "Hız (Speed) [m/s]", "#69db7c")
         self.ax_spd.legend(loc="upper left", facecolor="#212529", edgecolor="#495057", labelcolor="white")
 
-        # Batarya Grafiği
         self.ax_bat.plot(times, df_sorted["battery_pct"], color="#ffa94d", linewidth=2.0, label="Batarya (%)")
         self._style_axis(self.ax_bat, "Batarya Seviyesi [%]", "#ffa94d")
         self.ax_bat.legend(loc="upper left", facecolor="#212529", edgecolor="#495057", labelcolor="white")
 
-        # Zaman boşluklarını (gaps) vurgula
         for gap in analysis.timestamp_gaps:
             for ax in (self.ax_alt, self.ax_spd, self.ax_bat):
                 ax.axvspan(gap.start_time, gap.end_time, color="#ff6b6b", alpha=0.35, linestyle="--")
                 ax.axvline(gap.end_time, color="#ff6b6b", linestyle=":", linewidth=1.5)
 
-        # X ekseni zaman biçimlendirmesi
         self.ax_bat.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
         self.fig.autofmt_xdate()
         self.fig.tight_layout(pad=1.8)
@@ -376,20 +396,6 @@ class TelemetryApp(ctk.CTk):
         self._style_axis(self.ax_spd, "Hız (Speed) [m/s]", "#69db7c")
         self._style_axis(self.ax_bat, "Batarya Seviyesi [%]", "#ffa94d")
         self.canvas.draw()
-
-    def generate_samples_action(self):
-        """Örnek test verilerini oluşturur ve kullanıcıyı bilgilendirir."""
-        sample_dir = "samples"
-        files = generate_all_samples(sample_dir)
-        messagebox.showinfo(
-            "Örnek Dosyalar Hazır",
-            f"Örnek test CSV dosyaları '{sample_dir}' dizinine kaydedildi:\n\n"
-            f"1. telemetry_valid.csv (Tamamen geçerli)\n"
-            f"2. telemetry_mixed.csv (Hatalı ve geçerli karışık)\n"
-            f"3. telemetry_corrupted.csv (Bozuk CSV)\n"
-            f"4. telemetry_missing_columns.csv (Eksik sütunlu)\n"
-            f"5. telemetry_empty.csv (0 bayt boş dosya)"
-        )
 
 if __name__ == "__main__":
     app = TelemetryApp()
