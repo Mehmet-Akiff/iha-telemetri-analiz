@@ -1,6 +1,6 @@
 """
 gui_app.py
-İHA Telemetri Analiz ve Görselleştirme Masaüstü Uygulaması (v1.1.0).
+İHA Telemetri Analiz ve Görselleştirme Masaüstü Uygulaması (v1.2.0).
 CustomTkinter ve Matplotlib tabanlı modern kullanıcı arayüzü.
 Açılış ekranı (splash screen), ikon, animasyonlu sayaçlar ve sayfa geçişleri.
 """
@@ -31,16 +31,23 @@ from telemetry_analyzer import TelemetryAnalyzer, AnalysisResult
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
 
+
+def get_resource_path(relative_path: str) -> str:
+    """PyInstaller veya normal çalışmada kaynak dosya yolunu döndürür."""
+    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
+
 class TelemetryApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("İHA Telemetri Analiz İstasyonu v1.1.0")
+        self.title("İHA Telemetri Analiz İstasyonu v1.2.0")
         self.geometry("1280x860")
         self.minsize(1050, 720)
 
         # İkon Ayarla
-        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "telemetry_icon.ico")
+        icon_path = get_resource_path(os.path.join("assets", "telemetry_icon.ico"))
         if os.path.exists(icon_path):
             try:
                 self.iconbitmap(icon_path)
