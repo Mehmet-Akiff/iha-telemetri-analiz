@@ -1,6 +1,6 @@
 """
 gui_app.py
-İHA Telemetri Analiz ve Görselleştirme Masaüstü Uygulaması (v1.2.0).
+İHA Telemetri Analiz ve Görselleştirme Masaüstü Uygulaması (v1.3.0).
 CustomTkinter ve Matplotlib tabanlı modern kullanıcı arayüzü.
 Açılış ekranı (splash screen), ikon, animasyonlu sayaçlar ve sayfa geçişleri.
 """
@@ -42,7 +42,7 @@ class TelemetryApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("İHA Telemetri Analiz İstasyonu v1.2.0")
+        self.title("İHA Telemetri Analiz İstasyonu v1.3.0")
         self.geometry("1280x860")
         self.minsize(1050, 720)
 
