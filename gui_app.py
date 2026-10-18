@@ -317,26 +317,16 @@ class TelemetryApp(ctk.CTk):
         # 6. Grafikleri Çiz ve Zaman Boşluklarını Vurgula
         self._plot_telemetry(result.valid_df, analysis)
 
-        # 7. Bilgilendirme Popup'ı
+        # 7. Bilgilendirme Popup'ı: Yalnızca hata tespit edildiğinde popup açılır, hatasız durumda açılmaz
         if result.invalid_rows > 0:
             messagebox.showwarning(
-                "Kısmi Kurtarma Başarılı",
-                f"Telemetri analizi tamamlandı!\n\n"
-                f"• Geçerli Kayıt: {result.valid_rows}\n"
-                f"• Hatalı / Atlanan Kayıt: {result.invalid_rows}\n"
-                f"• Tespit Edilen Zaman Boşluğu: {len(analysis.timestamp_gaps)}\n\n"
-                f"Hatalı kayıtların detaylarını 'Hatalı Kayıtlar Raporu' sekmesinden inceleyebilirsiniz."
+                "Doğrulama Uyarısı: Hatalı Kayıtlar Bulundu",
+                f"Telemetri dosyasında {result.invalid_rows} adet hatalı satır tespit edildi ve elendi.\n\n"
+                f"• İşlenen Geçerli Kayıt: {result.valid_rows}\n"
+                f"• Reddedilen Hatalı Kayıt: {result.invalid_rows}\n\n"
+                f"Reddedilen satırların nedenleri 'Hatalı Kayıtlar Raporu' sekmesine aktarılmıştır."
             )
-        else:
-            messagebox.showinfo(
-                "İşlem Başarılı",
-                f"Telemetri analizi başarıyla tamamlandı!\n\n"
-                f"• Toplam Kayıt: {result.valid_rows} (Hepsi Geçerli)\n"
-                f"• Ortalama İrtifa: {analysis.avg_altitude} m\n"
-                f"• Ortalama Hız: {analysis.avg_speed} m/s\n"
-                f"• Min Batarya: {analysis.min_battery} %\n"
-                f"• Zaman Boşluğu: {len(analysis.timestamp_gaps)} adet tespit edildi."
-            )
+        # Hatasız durumda popup açılmaz, grafikler ve metrikler doğrudan güncellenir.
 
     def _plot_telemetry(self, df: pd.DataFrame, analysis: AnalysisResult):
         """İrtifa, hız, batarya zaman serisi grafiklerini çizer ve boşlukları vurgular."""
