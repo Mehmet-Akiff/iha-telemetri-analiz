@@ -21,25 +21,26 @@ Python kullanılarak geliştirilmiş, CSV formatındaki İHA telemetri verilerin
 
 ---
 
-## 🛠️ Kurulum
+## 📥 Doğrudan İndir ve Çalıştır (Python GEREKTİRMEZ!)
 
-Gereksinimler: Python 3.10 veya üzeri.
+Uygulamanın çalışması için bilgisayarınızda Python yüklü olmasına veya terminal komutları yazmanıza gerek yoktur:
 
-Gerekli kütüphaneleri yüklemek için:
-
-```bash
-pip install customtkinter matplotlib pandas numpy pytest
-```
+1. **[GitHub Releases Sayfasından İndirin (v1.0.0)](https://github.com/Mehmet-Akiff/iha-telemetri-analiz/releases/tag/v1.0.0)**
+   - `IHA_Telemetri_Istasyonu_v1.0.0_Windows.zip` dosyasını indirin ve bir klasöre çıkartın.
+   - Klasör içerisindeki **`IHA_Telemetri_Istasyonu.exe`** dosyasına çift tıklayarak uygulamayı anında başlatabilirsiniz!
 
 ---
 
-## 💻 Uygulamanın Başlatılması
+## 💻 Geliştirici Modunda Çalıştırma (Python ile)
 
-Masaüstü grafik arayüzünü çalıştırmak için:
+Eğer kaynak kodlar üzerinden çalıştırmak isterseniz:
 
-```bash
-python gui_app.py
-```
+1. Proje ana dizinindeki **`Baslat.bat`** dosyasına çift tıklayarak terminal ekranı görmeden uygulamayı açabilirsiniz.
+2. Veya terminal üzerinden:
+   ```bash
+   pip install -r requirements.txt  # veya: pip install customtkinter matplotlib pandas numpy pytest
+   python gui_app.py
+   ```
 
 ### Arayüz Kullanımı:
 1. **"Örnek CSV Üret"** butonuna basarak `samples/` dizini altına test dosyalarını oluşturabilirsiniz.
