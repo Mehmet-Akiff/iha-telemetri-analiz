@@ -99,3 +99,18 @@ def test_sequence_numbering_and_folder_creation(gen, tmp_path):
     new_empty_dir = tmp_path / "yeni_hedef"
     assert gen.get_next_sequence_number(str(new_empty_dir)) == 1
 
+
+def test_text_error_presence_in_raw_csv(gen):
+    # 'mixed' senaryosunda METIN_HATASI yer almalı
+    df_mixed, _ = gen.generate_data("mixed", count=20)
+    assert any("METIN_HATASI" in str(v) for v in df_mixed["altitude"].tolist())
+
+    # 'text_in_numeric' senaryosunda COK_YUKSEK yer almalı
+    df_text, _ = gen.generate_data("text_in_numeric", count=20)
+    assert any("COK_YUKSEK" in str(v) for v in df_text["altitude"].tolist())
+
+    # 'valid' senaryosunda ise hiçbir metin hatası olmamalı, tüm irtifalar sayısal olmalı
+    df_valid, _ = gen.generate_data("valid", count=20)
+    assert all(isinstance(v, (int, float)) for v in df_valid["altitude"].tolist())
+
+

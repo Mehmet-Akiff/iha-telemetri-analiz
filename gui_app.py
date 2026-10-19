@@ -1,9 +1,10 @@
 """
 gui_app.py
-İHA Telemetri Analiz ve Görselleştirme Masaüstü Uygulaması (v1.4.0).
+İHA Telemetri Analiz ve Görselleştirme Masaüstü Uygulaması (v1.6.0).
 CustomTkinter ve Matplotlib tabanlı modern kullanıcı arayüzü.
 Garantili animasyonlu açılış ekranı (Splash Screen - 1.8 sn), İHA ikonu,
-pencere fade-in açılış animasyonu, animasyonlu KPI sayaçları ve sayfa geçiş efektleri.
+pencere fade-in açılış animasyonu, animasyonlu KPI sayaçları, sayfa geçiş efektleri
+ve el değmemiş orijinal Ham CSV görüntüleyici sekmesi.
 """
 
 import os
@@ -42,7 +43,7 @@ class TelemetryApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("İHA Telemetri Analiz İstasyonu v1.5.0")
+        self.title("İHA Telemetri Analiz İstasyonu v1.6.0")
         self.geometry("1280x860")
         self.minsize(1050, 720)
 
@@ -120,7 +121,7 @@ class TelemetryApp(ctk.CTk):
 
         sub_lbl = ctk.CTkLabel(
             inner,
-            text="Uçuş Verisi Doğrulama, Anomali Tespiti ve Zaman Serisi Görselleştirme • v1.5.0",
+            text="Uçuş Verisi Doğrulama, Anomali Tespiti ve Zaman Serisi Görselleştirme • v1.6.0",
             font=ctk.CTkFont(size=11),
             text_color="#74c0fc",
             fg_color="#0b1526",
@@ -289,8 +290,9 @@ class TelemetryApp(ctk.CTk):
         self.tabview.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 
         self.tab_charts = self.tabview.add("📈 Telemetri Grafikleri")
-        self.tab_table = self.tabview.add("📋 Geçerli Veri Tablosu")
+        self.tab_table = self.tabview.add("📋 Doğrulanmış / Geçerli Veri Tablosu")
         self.tab_errors = self.tabview.add("⚠️ Hatalı Kayıtlar Raporu")
+        self.tab_raw = self.tabview.add("📄 Ham CSV Dosyası (Orijinal)")
 
         # Geçiş durumu etiketi (Sağ üstte yumuşak bildirim)
         self.lbl_tab_transition = ctk.CTkLabel(
@@ -304,6 +306,7 @@ class TelemetryApp(ctk.CTk):
         self._setup_charts_tab()
         self._setup_table_tab()
         self._setup_errors_tab()
+        self._setup_raw_tab()
 
     def _setup_charts_tab(self):
         self.fig = Figure(figsize=(10, 6), dpi=100)
@@ -382,6 +385,96 @@ class TelemetryApp(ctk.CTk):
         scroll_x.pack(side="bottom", fill="x")
         self.tree_errors.pack(side="left", fill="both", expand=True)
 
+    def _setup_raw_tab(self):
+        """Diskteki orijinal, filtrelenmemiş ve el değmemiş CSV metnini gösteren 4. sekme."""
+        container = ctk.CTkFrame(self.tab_raw, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Üst Bilgi ve Eylem Çubuğu
+        header_bar = ctk.CTkFrame(container, fg_color="#1c2d48", corner_radius=6)
+        header_bar.pack(fill="x", pady=(0, 8), padx=2)
+
+        self.lbl_raw_info = ctk.CTkLabel(
+            header_bar,
+            text="📄 Henüz dosya yüklenmedi. CSV seçildiğinde diskteki ham içerik burada görüntülenecektir.",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color="#74c0fc"
+        )
+        self.lbl_raw_info.pack(side="left", padx=12, pady=6)
+
+        btn_row = ctk.CTkFrame(header_bar, fg_color="transparent")
+        btn_row.pack(side="right", padx=8, pady=4)
+
+        self.btn_copy_raw = ctk.CTkButton(
+            btn_row,
+            text="📋 Metni Kopyala",
+            width=110,
+            height=26,
+            fg_color="#343a40",
+            hover_color="#495057",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            command=self._copy_raw_to_clipboard
+        )
+        self.btn_copy_raw.pack(side="right", padx=4)
+
+        # Ham Metin Kutusu (Consolas, kaydırma çubuklu, salt-okunur)
+        self.txt_raw = ctk.CTkTextbox(
+            container,
+            font=ctk.CTkFont(family="Consolas", size=11),
+            wrap="none",
+            fg_color="#1a1e24",
+            text_color="#f8f9fa",
+            corner_radius=6,
+            border_width=1,
+            border_color="#343a40"
+        )
+        self.txt_raw.pack(fill="both", expand=True, padx=2, pady=2)
+        self.txt_raw.insert("1.0", "# Henüz bir CSV dosyası seçilmedi.\n# '📂 CSV Dosyası Seç' butonuyla bir dosya seçtiğinizde diskteki ham metin buraya aktarılır.\n")
+        self.txt_raw.configure(state="disabled")
+
+    def _copy_raw_to_clipboard(self):
+        try:
+            content = self.txt_raw.get("1.0", "end-1c")
+            if content.strip():
+                self.clipboard_clear()
+                self.clipboard_append(content)
+                messagebox.showinfo("Kopyalandı", "Ham CSV içeriği panoya başarıyla kopyalandı!")
+            else:
+                messagebox.showwarning("Boş İçerik", "Kopyalanacak veri bulunamadı.")
+        except Exception as e:
+            messagebox.showerror("Hata", f"Panoya kopyalama başarısız: {str(e)}")
+
+    def _load_raw_file_content(self, file_path: str):
+        """Diskteki dosyayı ham olarak okur ve Ham CSV sekmesine yükler."""
+        if not file_path or not os.path.exists(file_path):
+            return
+
+        try:
+            file_size_bytes = os.path.getsize(file_path)
+            size_kb = file_size_bytes / 1024.0
+
+            # UTF-8 ile oku, bozuk karakterler varsa yer tutucu ile ikame et
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read(500_000)
+                extra = f.read(1)
+                is_truncated = bool(extra)
+
+            line_count = content.count("\n") + (1 if content and not content.endswith("\n") else 0)
+
+            self.txt_raw.configure(state="normal")
+            self.txt_raw.delete("1.0", "end")
+            self.txt_raw.insert("1.0", content)
+            self.txt_raw.configure(state="disabled")
+
+            trunc_msg = " ⚠️ (İlk 500.000 karakter önizleniyor)" if is_truncated else ""
+            info_text = (
+                f"📄 Dosya: {os.path.basename(file_path)} | Boyut: {size_kb:.1f} KB ({file_size_bytes:,} bayt) | "
+                f"Toplam Satır: {line_count:,} | Kodlama: UTF-8 (El Değmemiş Ham Metin){trunc_msg}"
+            )
+            self.lbl_raw_info.configure(text=info_text, text_color="#51cf66")
+        except Exception as e:
+            self.lbl_raw_info.configure(text=f"⚠️ Ham dosya okunamadı: {str(e)}", text_color="#ff6b6b")
+
     def _on_tab_switched(self):
         """Sayfa (sekme) geçişlerinde görsel çerçeve parlaması (glow pulse) ve yumuşak geçiş animasyonu."""
         current_tab = self.tabview.get()
@@ -435,6 +528,7 @@ class TelemetryApp(ctk.CTk):
         if file_path:
             self.current_file_path = file_path
             self.lbl_file_path.configure(text=os.path.basename(file_path), text_color="#00d2ff")
+            self._load_raw_file_content(file_path)
 
     def run_analysis(self):
         if not self.current_file_path:
@@ -443,6 +537,9 @@ class TelemetryApp(ctk.CTk):
                 "Lütfen analiz başlatmadan önce geçerli bir telemetri CSV dosyası seçiniz."
             )
             return
+
+        # Ham dosya içeriğinin her zaman güncel kalmasını sağla
+        self._load_raw_file_content(self.current_file_path)
 
         try:
             threshold = float(self.entry_threshold.get().strip())
