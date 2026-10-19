@@ -66,3 +66,36 @@ def test_generate_missing_columns_scenario(gen, validator, tmp_path):
     res = validator.validate_file(str(out_file))
     assert res.is_valid is False
     assert "eksik" in res.fatal_error.lower()
+
+def test_sequence_numbering_and_folder_creation(gen, tmp_path):
+    # 1. Boş klasörde ilk numara 1 olmalı
+    assert gen.get_next_sequence_number(str(tmp_path)) == 1
+    
+    # 2. Üretim yapıldığında "Üretilen Klasör 1 - ..." klasörü açılmalı
+    folder1, seq1, count1 = gen.generate_numbered_folder(str(tmp_path), mode="temel")
+    assert seq1 == 1
+    assert count1 == 5  # Temel sette 5 CSV olmalı
+    assert os.path.exists(folder1)
+    assert "Üretilen Klasör 1" in os.path.basename(folder1)
+    
+    # 3. İkinci üretimde numara 2 olmalı
+    folder2, seq2, count2 = gen.generate_numbered_folder(str(tmp_path), mode="temel")
+    assert seq2 == 2
+    assert "Üretilen Klasör 2" in os.path.basename(folder2)
+    
+    # 4. Eğer klasör 1 silinirse, klasördeki en büyük sayı (2) baz alınarak sıradaki 3 olmalı!
+    import shutil
+    shutil.rmtree(folder1)
+    assert not os.path.exists(folder1)
+    assert os.path.exists(folder2)
+    assert gen.get_next_sequence_number(str(tmp_path)) == 3
+    
+    folder3, seq3, count3 = gen.generate_numbered_folder(str(tmp_path), mode="tum")
+    assert seq3 == 3
+    assert count3 == 14
+    assert "Üretilen Klasör 3" in os.path.basename(folder3)
+    
+    # 5. Yeni bir klasöre geçildiğinde sıfırdan 1 ile başlamalı
+    new_empty_dir = tmp_path / "yeni_hedef"
+    assert gen.get_next_sequence_number(str(new_empty_dir)) == 1
+

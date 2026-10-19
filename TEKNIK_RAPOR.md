@@ -1,8 +1,9 @@
 # İHA Telemetri Analiz ve Görselleştirme Uygulaması - Teknik Rapor
 
-**Sürüm:** v1.4.0  
+**Sürüm:** v1.5.0  
 **Proje Adı:** İHA Telemetri Analiz ve Görselleştirme İstasyonu & CSV Senaryo Üretici  
 **Hazırlayan:** Mehmet Akif Ürey  
+
 
 ---
 

@@ -42,7 +42,7 @@ class TelemetryApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("İHA Telemetri Analiz İstasyonu v1.4.0")
+        self.title("İHA Telemetri Analiz İstasyonu v1.5.0")
         self.geometry("1280x860")
         self.minsize(1050, 720)
 
@@ -120,7 +120,7 @@ class TelemetryApp(ctk.CTk):
 
         sub_lbl = ctk.CTkLabel(
             inner,
-            text="Uçuş Verisi Doğrulama, Anomali Tespiti ve Zaman Serisi Görselleştirme • v1.4.0",
+            text="Uçuş Verisi Doğrulama, Anomali Tespiti ve Zaman Serisi Görselleştirme • v1.5.0",
             font=ctk.CTkFont(size=11),
             text_color="#74c0fc",
             fg_color="#0b1526",

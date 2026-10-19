@@ -1,9 +1,9 @@
-# 🛸 İHA Telemetri Analiz ve Görselleştirme İstasyonu (v1.4.0)
+# 🛸 İHA Telemetri Analiz ve Görselleştirme İstasyonu (v1.5.0)
 
-[![Version](https://img.shields.io/badge/Sürüm-v1.4.0-00d2ff?style=for-the-badge)](https://github.com/Mehmet-Akiff/iha-telemetri-analiz/releases/tag/v1.4.0)
+[![Version](https://img.shields.io/badge/Sürüm-v1.5.0-00d2ff?style=for-the-badge)](https://github.com/Mehmet-Akiff/iha-telemetri-analiz/releases/tag/v1.5.0)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D6?style=for-the-badge)](https://github.com/Mehmet-Akiff/iha-telemetri-analiz/releases)
-[![Security](https://img.shields.io/badge/Güvenlik-DigiCert%20İmzalı%20Motor-2b8a3e?style=for-the-badge)](https://github.com/Mehmet-Akiff/iha-telemetri-analiz/releases/tag/v1.4.0)
-[![Tests](https://img.shields.io/badge/Pytest-30%2F30%20Başarılı-51cf66?style=for-the-badge)](#8-otomatik-testler-ve-senaryo-doğrulaması)
+[![Security](https://img.shields.io/badge/Güvenlik-DigiCert%20İmzalı%20Motor-2b8a3e?style=for-the-badge)](https://github.com/Mehmet-Akiff/iha-telemetri-analiz/releases/tag/v1.5.0)
+[![Tests](https://img.shields.io/badge/Pytest-31%2F31%20Başarılı-51cf66?style=for-the-badge)](#8-otomatik-testler-ve-senaryo-doğrulaması)
 
 **İHA Telemetri Analiz ve Görselleştirme İstasyonu**, İnsansız Hava Araçlarından (İHA / SİHA) elde edilen CSV formatındaki uçuş telemetri kayıtlarını doğrulayan, hatalı satırları ayıklayıp **kısmi veri kurtarma (partial recovery)** uygulayan, kritik uçuş metriklerini ve **haberleşme kesintisi (timestamp gap)** anomalilerini hesaplayan modern bir masaüstü uygulamasıdır.
 
@@ -42,8 +42,8 @@
 
 Bilgisayarınızda Python veya herhangi bir kütüphane kurulu olmasına gerek yoktur:
 
-1. **[GitHub Releases (v1.4.0) Sayfasına Gidin](https://github.com/Mehmet-Akiff/iha-telemetri-analiz/releases/tag/v1.4.0)**
-2. **`IHA_Telemetri_Analiz_DigiCert_Signed_v1.4.0.zip`** dosyasını indirin ve bir klasöre çıkartın.
+1. **[GitHub Releases (v1.5.0) Sayfasına Gidin](https://github.com/Mehmet-Akiff/iha-telemetri-analiz/releases/tag/v1.5.0)**
+2. **`IHA_Telemetri_Analiz_DigiCert_Signed_v1.5.0.zip`** dosyasını indirin ve bir klasöre çıkartın.
 3. Klasör içerisindeki **`IHA_Telemetri_Analiz Baslat.vbs`** (veya `IHA_Telemetri_Analiz Baslat.bat`) dosyasına çift tıklayın.
 4. Özel İHA açılış ekranı (Splash) belirecek ve 1.8 saniye içinde ana istasyon ekranı açılacaktır!
 
