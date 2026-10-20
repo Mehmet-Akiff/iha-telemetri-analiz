@@ -1,6 +1,6 @@
 """
 data_generator.py
-İHA telemetri verisi üretim motoru (v1.5.0).
+İHA telemetri verisi üretim motoru (v1.6.0).
 Genişletilebilir senaryo tabanlı sentetik veri üretimi sağlar.
 Her periyodu hedef klasördeki en büyük numarayı takip ederek
 'Üretilen Klasör N - Tarih' formatında sıralı ve izole klasörlerde depolar.

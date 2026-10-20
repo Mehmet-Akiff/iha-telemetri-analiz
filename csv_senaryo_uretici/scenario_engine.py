@@ -1,6 +1,6 @@
 """
 scenario_engine.py
-İHA telemetri verisi senaryo üretim motoru (v1.5.0).
+İHA telemetri verisi senaryo üretim motoru (v1.6.0).
 14 farklı uçuş, sınır ve hata senaryosu üretir.
 Her üretim periyodunu hedef klasördeki en büyük numarayı takip ederek
 'Üretilen Klasör N - Tarih' formatında sıralı ve izole klasörlerde depolar.

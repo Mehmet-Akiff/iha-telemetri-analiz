@@ -165,7 +165,15 @@ class TelemetryValidator:
                     continue
 
                 # Alan spesifik kural kontrolleri
-                if col == "speed" and num_val < 0:
+                if col == "altitude" and not (-500.0 <= num_val <= 50000.0):
+                    row_errors.append(RowError(
+                        row=row_num,
+                        column="altitude",
+                        message=f"Geçersiz irtifa değeri (-500 m ile 50000 m arası olmalı): {num_val}",
+                        raw_value=num_val
+                    ))
+
+                elif col == "speed" and num_val < 0:
                     row_errors.append(RowError(
                         row=row_num,
                         column="speed",

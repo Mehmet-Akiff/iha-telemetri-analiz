@@ -21,6 +21,10 @@ try:
 except ImportError:
     pyi_splash = None
 
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if _CURRENT_DIR not in sys.path:
+    sys.path.insert(0, _CURRENT_DIR)
+
 from scenario_engine import TelemetryScenarioGenerator, SCENARIO_DESCRIPTIONS
 
 ctk.set_appearance_mode("Dark")
@@ -53,14 +57,19 @@ class CSVGeneratorApp(ctk.CTk):
         self.current_df = None
         self.current_raw = None
 
-        # Varsayılan Hedef Kayıt Dizini (Masaüstündeki Test_CSV_Verileri veya samples)
+        # Varsayılan Hedef Kayıt Dizini (Masaüstündeki Test_CSV_Verileri veya proje samples dizini)
         desktop_test_dir = r"C:\Users\PC\Desktop\IHA_Masaustu_Uygulamalari\Test_CSV_Verileri"
+        parent_samples_dir = os.path.abspath(os.path.join(_CURRENT_DIR, "..", "samples"))
+        local_samples_dir = os.path.abspath(os.path.join(_CURRENT_DIR, "samples"))
         if os.path.exists(desktop_test_dir):
             self.target_base_dir = os.path.abspath(desktop_test_dir)
+        elif os.path.exists(parent_samples_dir):
+            self.target_base_dir = parent_samples_dir
         elif os.path.exists("samples"):
             self.target_base_dir = os.path.abspath("samples")
         else:
-            self.target_base_dir = os.path.abspath(os.getcwd())
+            os.makedirs(local_samples_dir, exist_ok=True)
+            self.target_base_dir = local_samples_dir
 
         self._build_ui()
 
@@ -150,7 +159,12 @@ class CSVGeneratorApp(ctk.CTk):
         total_steps = 36  # ~1.8 saniye garantili açılış ekranı
 
         def animate_splash(step_idx=0):
+            if not self.winfo_exists():
+                return
             if step_idx <= total_steps:
+                if not splash.winfo_exists():
+                    self._fade_in_main_window()
+                    return
                 prog = step_idx / total_steps
                 pbar.set(prog)
                 pct = int(prog * 100)
@@ -175,6 +189,8 @@ class CSVGeneratorApp(ctk.CTk):
 
     def _fade_in_main_window(self, alpha=0.0):
         """Ana pencereyi yumuşak (fade-in) animasyonla görünür yapar."""
+        if not self.winfo_exists():
+            return
         alpha = min(1.0, alpha + 0.12)
         self.attributes("-alpha", alpha)
         if alpha < 1.0:
@@ -517,6 +533,8 @@ class CSVGeneratorApp(ctk.CTk):
         glow_colors = ["#2bda72", "#40c057", "#2b8a3e", "#2b3035"]
 
         def animate_border(idx=0):
+            if not self.winfo_exists():
+                return
             if idx < len(glow_colors):
                 self.tabview.configure(border_color=glow_colors[idx])
                 self.after(65, animate_border, idx + 1)

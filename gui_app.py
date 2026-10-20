@@ -160,7 +160,12 @@ class TelemetryApp(ctk.CTk):
         total_steps = 36  # 36 * 50ms = 1800ms (1.8 saniye garantili açılış ekranı)
 
         def animate_splash(step_idx=0):
+            if not self.winfo_exists():
+                return
             if step_idx <= total_steps:
+                if not splash.winfo_exists():
+                    self._fade_in_main_window()
+                    return
                 prog = step_idx / total_steps
                 pbar.set(prog)
                 pct = int(prog * 100)
@@ -185,6 +190,8 @@ class TelemetryApp(ctk.CTk):
 
     def _fade_in_main_window(self, alpha=0.0):
         """Ana pencereyi yumuşak (fade-in) animasyonla görünür yapar."""
+        if not self.winfo_exists():
+            return
         alpha = min(1.0, alpha + 0.12)
         self.attributes("-alpha", alpha)
         if alpha < 1.0:
@@ -481,6 +488,8 @@ class TelemetryApp(ctk.CTk):
         glow_colors = ["#00d2ff", "#339af0", "#1971c2", "#2b3035"]
 
         def animate_border(idx=0):
+            if not self.winfo_exists():
+                return
             if idx < len(glow_colors):
                 self.tabview.configure(border_color=glow_colors[idx])
                 self.after(65, animate_border, idx + 1)
@@ -495,6 +504,8 @@ class TelemetryApp(ctk.CTk):
         colors = ["#00d2ff", "#339af0", "#2b3035"]
 
         def pulse_step(c_idx=0):
+            if not self.winfo_exists():
+                return
             if c_idx < len(colors):
                 for cf in self.card_frames.values():
                     cf.configure(border_color=colors[c_idx])
@@ -505,6 +516,8 @@ class TelemetryApp(ctk.CTk):
     def _animate_number(self, card_key: str, start: float, end: float, unit: str = "", steps: int = 12, is_int: bool = False):
         """Metrik kartındaki sayıyı profesyonel sayaç animasyonuyla artırır."""
         def step(current_step):
+            if not self.winfo_exists():
+                return
             if current_step >= steps:
                 if is_int:
                     self.cards[card_key].configure(text=f"{int(end)} {unit}".strip())

@@ -1,14 +1,14 @@
-# 🧪 İHA Telemetri CSV Senaryo Üretici (v1.5.0)
+# 🧪 İHA Telemetri CSV Senaryo Üretici (v1.6.0)
 
-[![Version](https://img.shields.io/badge/Sürüm-v1.5.0-2bda72?style=for-the-badge)](https://github.com/Mehmet-Akiff/iha-csv-senaryo-uretici/releases/tag/v1.5.0)
+[![Version](https://img.shields.io/badge/Sürüm-v1.6.0-2bda72?style=for-the-badge)](https://github.com/Mehmet-Akiff/iha-csv-senaryo-uretici/releases/tag/v1.6.0)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D6?style=for-the-badge)](https://github.com/Mehmet-Akiff/iha-csv-senaryo-uretici/releases)
-[![Security](https://img.shields.io/badge/Güvenlik-DigiCert%20İmzalı%20Motor-2b8a3e?style=for-the-badge)](https://github.com/Mehmet-Akiff/iha-csv-senaryo-uretici/releases/tag/v1.5.0)
+[![Security](https://img.shields.io/badge/Güvenlik-DigiCert%20İmzalı%20Motor-2b8a3e?style=for-the-badge)](https://github.com/Mehmet-Akiff/iha-csv-senaryo-uretici/releases/tag/v1.6.0)
 
 **İHA Telemetri CSV Senaryo Üretici**, İHA yer kontrol istasyonlarını ve telemetri analiz yazılımlarını uçtan uca test etmek amacıyla geliştirilmiş, **14 farklı uçuş, sensör arızası ve veri bozulması senaryosunu** üretebilen bağımsız bir masaüstü simülasyon uygulamasıdır.
 
 ---
 
-## 🌟 Öne Çıkan Yenilikler (v1.5.0)
+## 🌟 Öne Çıkan Yenilikler (v1.6.0)
 
 * **⚡ Anında Canlı Önizleme (Instant Auto-Preview):**
   * Sol paneldeki açılır listeden bir senaryo seçtiğiniz anda tablo ve ham CSV metni **otomatik olarak anında güncellenir**. Artık önizleme için ekstra bir şey yapmanıza gerek kalmaz.
@@ -31,8 +31,8 @@
 
 ## 📥 Doğrudan İndir ve Çalıştır (Python Gerektirmez!)
 
-1. **[GitHub Releases (v1.5.0) Sayfasına Gidin](https://github.com/Mehmet-Akiff/iha-csv-senaryo-uretici/releases/tag/v1.5.0)**
-2. **`CSV_Senaryo_Uretici_DigiCert_Signed_v1.5.0.zip`** arşivini indirin ve bir klasöre çıkartın.
+1. **[GitHub Releases (v1.6.0) Sayfasına Gidin](https://github.com/Mehmet-Akiff/iha-csv-senaryo-uretici/releases/tag/v1.6.0)**
+2. **`CSV_Senaryo_Uretici_DigiCert_Signed_v1.6.0.zip`** arşivini indirin ve bir klasöre çıkartın.
 3. Klasör içerisindeki **`CSV_Senaryo_Uretici Baslat.vbs`** (veya `.bat`) dosyasına çift tıklayarak uygulamayı hemen başlatın!
 
 ---
@@ -71,7 +71,7 @@ python app.py
 
 ```text
 iha-csv-senaryo-uretici/
-├── app.py                  # CustomTkinter Masaüstü Arayüzü (v1.5.0 - Akıllı Sıralı Üretim & Canlı Önizleme)
+├── app.py                  # CustomTkinter Masaüstü Arayüzü (v1.6.0 - Akıllı Sıralı Üretim & Canlı Önizleme)
 ├── scenario_engine.py      # 14 Senaryolu Akıllı Numaralandırma ve Üretim Motoru
 ├── README.md               # Kapsamlı Kullanım ve Senaryo Kılavuzu
 ├── requirements.txt        # Python Bağımlılıkları

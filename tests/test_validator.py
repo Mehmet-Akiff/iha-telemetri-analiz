@@ -75,6 +75,21 @@ def test_row_validations_and_partial_recovery(tmp_path):
     assert len(result.errors) == 8
     assert len(result.valid_df) == 2
 
+    # Altitude boundary check (-500 m .. 50000 m)
+    alt_file = tmp_path / "alt_bounds.csv"
+    alt_file.write_text(
+        "timestamp,altitude,speed,battery_pct,longitude,latitude,pitch,roll,yaw\n"
+        "2026-10-20 12:00:00,-600.0,15,80,29.0,41.0,0,0,0\n"
+        "2026-10-20 12:00:01,55000.0,15,80,29.0,41.0,0,0,0\n"
+        "2026-10-20 12:00:02,-500.0,15,80,29.0,41.0,0,0,0\n"
+        "2026-10-20 12:00:03,50000.0,15,80,29.0,41.0,0,0,0\n"
+    )
+    alt_res = validator.validate_file(str(alt_file))
+    assert alt_res.is_valid
+    assert alt_res.valid_rows == 2
+    assert alt_res.invalid_rows == 2
+    assert all(e.column == "altitude" for e in alt_res.errors)
+
 def test_zero_valid_records(tmp_path):
     csv_file = tmp_path / "all_bad.csv"
     csv_file.write_text(
